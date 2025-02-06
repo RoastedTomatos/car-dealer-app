@@ -1,32 +1,63 @@
 'use client';
+import { useEffect, useState } from 'react';
 
-import { Suspense } from 'react';
-
-const getModels = async (makeId: string, year: string) => {
-  const res = await fetch(
-    `https://vpic.nhtsa.dot.gov/api/vehicles/GetModelsForMakeIdYear/makeId/${makeId}/modelyear/${year}?format=json`
-  );
-  return res.json();
+type Model = {
+  Model_ID: string;
+  Model_Name: string;
 };
 
-const ModelList = async ({
-  makeId,
-  year,
+export default function ResultPage({
+  params,
 }: {
-  makeId: string;
-  year: string;
-}) => {
-  const data = await getModels(makeId, year);
+  params: { makeId: string; year: string };
+}) {
+  const { makeId, year } = params;
+
+  const [models, setModels] = useState<Model[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    if (!makeId || !year) return;
+
+    const fetchModels = async () => {
+      setIsLoading(true);
+      try {
+        const response = await fetch(
+          `https://vpic.nhtsa.dot.gov/api/vehicles/GetModelsForMakeIdYear/makeId/${makeId}/modelyear/${year}?format=json`
+        );
+        const data = await response.json();
+        setModels(data.Results || []);
+      } catch (error) {
+        console.error('Error:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchModels();
+  }, [makeId, year]);
+
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
 
   return (
-    <div>
-      {data.Results.map((model: any) => (
-        <div>{model.Model_Name}</div>
-      ))}
+    <div className="p-4">
+      <h1 className="text-2xl font-bold mb-4">
+        Models: {makeId} ({year})
+      </h1>
+
+      {models.length > 0 ? (
+        <ul className="space-y-2">
+          {models.map((model) => (
+            <li key={model.Model_ID} className="p-2 bg-gray-100 rounded">
+              {model.Model_Name}
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <div>No models</div>
+      )}
     </div>
   );
-};
-
-export default function ResultPage() {
-  return <>This is result</>;
 }
