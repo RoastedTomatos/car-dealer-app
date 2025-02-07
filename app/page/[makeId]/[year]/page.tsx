@@ -28,16 +28,16 @@ export default function ResultPage({
           `https://vpic.nhtsa.dot.gov/api/vehicles/GetModelsForMakeIdYear/makeId/${makeId}/modelyear/${year}?format=json`
         );
         if (!response.ok) {
-          throw new Error('Ошибка загрузки данных');
+          throw new Error('Error while loading data');
         }
         const data = await response.json();
         if (!data.Results) {
-          throw new Error('Данные не найдены');
+          throw new Error('No data found');
         }
         setModels(data.Results);
       } catch (error) {
         console.error('Error:', error);
-        setError('Не удалось загрузить данные. Пожалуйста, попробуйте позже.');
+        setError('Error');
       } finally {
         setIsLoading(false);
       }
@@ -54,7 +54,6 @@ export default function ResultPage({
     return <div className="p-4 text-red-500">{error}</div>;
   }
 
-  console.log(models);
   return (
     <div className="p-4">
       <h1 className="text-2xl font-bold mb-4">
