@@ -2,12 +2,17 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 
-export default function FilterPage() {
-  const [makes, setMakes] = useState([]);
-  const [selectedMake, setSelectedMake] = useState('');
-  const [selectedYear, setSelectedYear] = useState('');
+type Make = {
+  MakeId: string;
+  MakeName: string;
+};
 
-  const [years] = useState(
+export default function FilterPage() {
+  const [makes, setMakes] = useState<Make[]>([]);
+  const [selectedMake, setSelectedMake] = useState<string>('');
+  const [selectedYear, setSelectedYear] = useState<string>('');
+
+  const [years] = useState<number[]>(
     [...Array(new Date().getFullYear() - 2014).keys()].map((i) => 2015 + i)
   );
 
@@ -15,11 +20,15 @@ export default function FilterPage() {
     fetch(
       'https://vpic.nhtsa.dot.gov/api/vehicles/GetMakesForVehicleType/car?format=json'
     )
-      .then((res) => res.json())
-      .then((data) => setMakes(data.Results));
+      .then((res) => {
+        if (!res.ok) {
+          throw new Error('Loading data error');
+        }
+        return res.json();
+      })
+      .then((data) => setMakes(data.Results))
+      .catch((error) => console.error('Error log:', error));
   }, []);
-
-  console.log(makes);
 
   return (
     <main className="min-h-screen p-8">
@@ -39,7 +48,8 @@ export default function FilterPage() {
                 value={selectedMake}
                 onChange={(e) => setSelectedMake(e.target.value)}
               >
-                {makes.map((make) => (
+                <option value="">Select Make</option>
+                {makes?.map((make) => (
                   <option key={make.MakeId} value={make.MakeId}>
                     {make.MakeName}
                   </option>
@@ -50,10 +60,11 @@ export default function FilterPage() {
             <div className="flex flex-col w-1/2">
               <label className="text-xl text-gray-600 text-center">Year</label>
               <select
-                className=" p-2 border rounded text-gray-600"
+                className="p-2 border rounded text-gray-600"
                 value={selectedYear}
                 onChange={(e) => setSelectedYear(e.target.value)}
               >
+                <option value="">Select Year</option>
                 {years.map((year) => (
                   <option key={year} value={year}>
                     {year}

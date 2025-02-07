@@ -15,20 +15,29 @@ export default function ResultPage({
 
   const [models, setModels] = useState<Model[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!makeId || !year) return;
 
     const fetchModels = async () => {
       setIsLoading(true);
+      setError(null);
       try {
         const response = await fetch(
           `https://vpic.nhtsa.dot.gov/api/vehicles/GetModelsForMakeIdYear/makeId/${makeId}/modelyear/${year}?format=json`
         );
+        if (!response.ok) {
+          throw new Error('Ошибка загрузки данных');
+        }
         const data = await response.json();
-        setModels(data.Results || []);
+        if (!data.Results) {
+          throw new Error('Данные не найдены');
+        }
+        setModels(data.Results);
       } catch (error) {
         console.error('Error:', error);
+        setError('Не удалось загрузить данные. Пожалуйста, попробуйте позже.');
       } finally {
         setIsLoading(false);
       }
@@ -41,6 +50,11 @@ export default function ResultPage({
     return <div>Loading...</div>;
   }
 
+  if (error) {
+    return <div className="p-4 text-red-500">{error}</div>;
+  }
+
+  console.log(models);
   return (
     <div className="p-4">
       <h1 className="text-2xl font-bold mb-4">
